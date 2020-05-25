@@ -1,0 +1,33 @@
+#!/usr/bin/env ruby
+require 'open-uri'
+require 'nokogiri'
+
+dl_dir = ARGV[0] || '/shirai/anime/~dl/'
+# shows_list = File.open(File.join(File.dirname(__FILE__), 'shows'), 'r').take_while {|str| !str.start_with? '#'}.map do |str|
+shows_list = File.open(File.join(File.dirname(__FILE__), 'shows'), 'r').select {|str| !str.start_with? '#'}.map do |str|
+  split = str.chop.split('#')
+  [split[0], split[3..]]
+end
+
+
+feed = open('https://nyaa.si/?page=rss') {|rss| Nokogiri.parse(rss)}
+last_pub = Time.parse(File.open(File.join(File.dirname(__FILE__), 'last_pub'), 'r').read) rescue nil
+shows = feed.xpath('//rss/channel/item')
+shows ||= last_pub && shows.take_while { |show| Time.parse(show.at('pubdate').text) > last_pub } 
+trusted_shows = shows.select {|show| 
+	show.at('//nyaa|trusted').text == 'Yes'
+}.map { |show|
+	{
+		title: show.at('title').text,
+		link: show.at('link').text
+	}
+}
+
+File.open(File.join(File.dirname(__FILE__), 'last_pub'), 'w') {|file| file.write Time.now.to_s}
+puts Time.now.to_s
+trusted_shows.filter { |show|shows_list.any? { |title|
+  show[:title].include?(title[0]) && title[1].all? {|bits| show[:title].include? bits}}
+}.each do |show|
+  puts show.title
+  `transmission-cli -w #{dl_dir} -f /share/code/animu_watch/finish-dl #{show[:link]} `
+end

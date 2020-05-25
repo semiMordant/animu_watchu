@@ -1,0 +1,28 @@
+#!/usr/bin/env ruby
+require 'fileutils'
+
+dl_dir = ARGV[0] || '/shirai/anime/~dl/'
+dest_dir = ARGV[1] || '/shirai/anime/'
+
+patterns = File.open(File.join(File.dirname(__FILE__), 'patterns')).map { |line| %r[#{line.chop}] }
+shows = File.open(File.join(File.dirname(__FILE__), 'shows')).each_with_object({}) do |line, hash|
+  next if line.start_with? '#'
+  split = line.chop.split('#')
+  hash[split[0]] = split[1..2]
+end
+
+Dir["#{dl_dir}*"].map do |file|
+  patterns.lazy.map { |pattern| file.split('/')[-1].match pattern }.find(&:itself)
+end.compact.each do |match|
+  begin
+    show = shows[match[:title]]
+	puts show[0]
+    orig = dl_dir + match.string
+    new = dest_dir + show[0]
+    FileUtils.mkdir_p new
+    new << "/%s - s%.2de%.2d%s" % [show[0], show[1].to_i, match[:ep].to_i, match[:ext]]
+    FileUtils.mv orig, new
+  rescue
+    next
+  end
+end
