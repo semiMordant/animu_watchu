@@ -1,3 +1,5 @@
-\[HorribleSubs\] (?<title>.+) - (?<ep>\d+) \[\d+p\](?<ext>\..+)
-\[NeSubs\] (?<title>.+) - Episode (?<ep>\d+) \(English Softsub\)(?<ext>\..+)
-\[DulE\] (?<title>.+) - (?<ep>\d+) - .* \[\d+p\].*(?<ext>\..+)
+^RIP\[HorribleSubs\] (?<title>.+) - (?<ep>\d+) \[\d+p\](?<ext>\.[a-z]+)$
+^\[NeSubs\] (?<title>.+) - Episode (?<ep>\d+) \(English Softsub\)(?<ext>\.[a-z]+)$
+^\[DulE\] (?<title>.+) - (?<ep>\d+) - .* \[\d+p\].*(?<ext>\.[a-z]+)$
+^\[Erai-raws\] (?<title>.+) - (?<ep>\d+) \[\d+p\].*(?<ext>\.[a-z]+)$
+^\[SubsPlease\] (?<title>.+) - (?<ep>\d+) \(\d+p\).*(?<ext>\.[a-z]+)$

@@ -1,6 +1,17 @@
 #!/usr/bin/env ruby
 require 'fileutils'
 
+LOG_FILE = './log'
+
+def log(message)
+  time_message = "#{Time.now.to_s} #{message}\n"
+  puts time_message
+  open(File.join(File.dirname(__FILE__), LOG_FILE), 'a') { |file|
+    file.puts(time_message)
+  }
+end
+
+begin
 dl_dir = ARGV[0] || '/shirai/anime/~dl/'
 dest_dir = ARGV[1] || '/shirai/anime/'
 
@@ -16,13 +27,16 @@ Dir["#{dl_dir}*"].map do |file|
 end.compact.each do |match|
   begin
     show = shows[match[:title]]
-	puts show[0]
     orig = dl_dir + match.string
     new = dest_dir + show[0]
     FileUtils.mkdir_p new
     new << "/%s - s%.2de%.2d%s" % [show[0], show[1].to_i, match[:ep].to_i, match[:ext]]
-    FileUtils.mv orig, new
-  rescue
-    next
+    log "[watchu] Created: #{new}"
+	FileUtils.mv orig, new
+  rescue StandardError => e
+	log "[watchu] ERROR - #{e}"
   end
+end
+rescue StandardError => e
+  log "[watchu] ERROR - #{e}"
 end

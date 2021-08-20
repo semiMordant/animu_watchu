@@ -1,26 +1,38 @@
 #!/usr/bin/env ruby
-
 require 'fileutils'
 
-dl_dir = ARGV[0] || '/shirai/anime/~dl/'
-dest_dir = ARGV[1] || '/shirai/anime/'
-filename = ARGV[2] || ENV["TR_TORRENT_NAME"]
+LOG_FILE = './log'
 
-patterns = File.open(File.join(File.dirname(__FILE__), 'patterns')).map { |line| %r[#{line.chop}] }
-shows = File.open(File.join(File.dirname(__FILE__), 'shows')).each_with_object({}) do |line, hash|
-  next if line.start_with? '#'
-  split = line.chop.split('#')
-  hash[split[0]] = split[1..2]
+def log(message)
+  open(LOG_FILE, 'a') { |file|
+    file.puts("#{Time.now.to_s} #{message}\n")
+  }
 end
-match = patterns.lazy.map { |pattern| filename.match pattern }.find(&:itself)
+
 begin
-	show = shows[match[:title]]
-	orig = dl_dir + match.string
-	new = dest_dir + show[0]
-	FileUtils.mkdir_p new
-	new << "/%s - s%.2de%.2d%s" % [show[0], show[1].to_i, match[:ep].to_i, match[:ext]]
-	FileUtils.mv orig, new
-	puts "Created: " + new
-rescue
-	puts "No file: " + orig
+  dl_dir = ARGV[0] || '/shirai/anime/~dl/'
+  dest_dir = ARGV[1] || '/shirai/anime/'
+  filename = ARGV[2] || ENV["TR_TORRENT_NAME"]
+
+  patterns = File.open(File.join(File.dirname(__FILE__), 'patterns')).map { |line| %r[#{line.chop}] }
+  shows = File.open(File.join(File.dirname(__FILE__), 'shows')).each_with_object({}) do |line, hash|
+    next if line.start_with? '#'
+    split = line.chop.split('#')
+    hash[split[0]] = split[1..2]
+  end
+  match = patterns.lazy.map { |pattern| filename.match pattern }.find(&:itself)
+  begin
+  	show = shows[match[:title]]
+  	orig = dl_dir + match.string
+  	new = dest_dir + show[0] + "/"
+  	FileUtils.mkdir_p new
+    filename = "%s - s%.2de%.2d%s" % [show[0], show[1].to_i, match[:ep].to_i, match[:ext]]
+  	new << filename
+  	FileUtils.mv orig, new
+  	log "[finish] Created: #{new}"
+  rescue
+  	log "[finish] No file: #{orig}"
+  end
+rescue StandardError => e
+  log "[finish] ERROR - #{e}"
 end
